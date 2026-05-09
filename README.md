@@ -9,7 +9,8 @@ Arpeggio Player is an interactive web application designed for practicing musica
 - **Arpeggio Directions**: Practice both ascending (Root to 7th), descending (7th to Root), and randomized arpeggios.
 - **Full Transposition Support**: Optimized for woodwind and brass players. Toggle between Concert Pitch, B♭ instruments, and E♭ instruments for accurate notation.
 - **Notation Octave Shift**: Read sheet music in the most comfortable register for your instrument (e.g., moving Tenor Sax notation up an octave to avoid excessive ledger lines) without affecting the correct MIDI playback octave.
-- **Multiple Playback Sounds**: Select between Piano, Soprano Sax, Alto Sax, Tenor Sax, and Baritone Sax for backing tracks.
+- **Multiple Playback Sounds**: Select between Piano, Soprano Sax, Alto Sax, Tenor Sax, and Baritone Sax for the main melody.
+- **Organ Chord Accompaniment**: Optionally enable an underlying organ backing track that sustains and dynamically follows the parsed chord progression.
 - **Suggested Scales**: The app analyzes your chord progression and suggests relevant scales for improvisation. Click any suggested scale to instantly view and hear its notation.
 - **Bilingual Interface**: Seamlessly switch between English and Japanese interfaces.
 
@@ -57,4 +58,6 @@ This project is open-sourced under the **MIT License**. See the [LICENSE](LICENS
 
 ## Author
 
-**Toshiaki Katayama** \<ktym@dbcls.jp\> & **Antigravity/Gemini 3.1 Pro**
+**Toshiaki Katayama** \<k@bioruby.org\>
+
+*(Code generation and implementation assisted by Google DeepMind's Antigravity / Gemini model)*
