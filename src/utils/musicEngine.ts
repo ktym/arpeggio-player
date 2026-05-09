@@ -1,4 +1,4 @@
-import { Chord, Note, Scale, Interval } from "@tonaljs/tonal";
+import { Chord, Note, Scale } from "@tonaljs/tonal";
 
 export type Instrument = "C" | "Bb" | "Eb";
 export type ArpeggioDirection = "up" | "down" | "random";
@@ -79,14 +79,16 @@ function toABCFormat(noteInfo: string): string {
   // C3 = C,
   // C6 = c'
   let abcNote = letter;
-  if (oct === 4) {
-    abcNote = letter;
-  } else if (oct === 5) {
-    abcNote = letter.toLowerCase();
-  } else if (oct > 5) {
-    abcNote = letter.toLowerCase() + "'".repeat(oct - 5);
-  } else if (oct < 4) {
-    abcNote = letter + ",".repeat(4 - oct);
+  if (oct !== undefined) {
+    if (oct === 4) {
+      abcNote = letter;
+    } else if (oct === 5) {
+      abcNote = letter.toLowerCase();
+    } else if (oct > 5) {
+      abcNote = letter.toLowerCase() + "'".repeat(oct - 5);
+    } else if (oct < 4) {
+      abcNote = letter + ",".repeat(4 - oct);
+    }
   }
 
   return `${abcAcc}${abcNote}`;
@@ -153,7 +155,8 @@ export function generateABC(
   direction: ArpeggioDirection,
   title: string,
   playbackProgram: number,
-  visualOctaveOffset: number
+  visualOctaveOffset: number,
+  playAccompaniment: boolean = true
 ): string {
   if (progression.length === 0) return "";
 
@@ -186,54 +189,91 @@ export function generateABC(
     abc += `%%MIDI transpose ${midiTranspose}\n`;
   }
   
-  abc += `%%MIDI program ${playbackProgram}\n`;
+  if (playAccompaniment) {
+    abc += `%%score (1 2)\n`;
+  }
+  
   abc += `M: 4/4\n`;
   abc += `L: ${L}\n`;
   abc += `K: C\n`;
 
   // Determine key signature string if we wanted, but we'll use accidentals.
 
-  let prevNote: string | null = null;
   const baseOctave = getBaseOctave(playbackProgram);
+
+  let v1CurrentLine = "";
+  let v2CurrentLine = "";
 
   for (let i = 0; i < progression.length; i++) {
     const measure = progression[i];
     if (measure.chords.length === 0) continue;
 
-    // Distribute the rhythm characters over the chords in the measure
-    // For example, if rhythm is 16 chars and 2 chords, each gets 8 chars.
-    const charsPerChord = Math.max(1, Math.floor(beatDivisions / measure.chords.length));
+    const numOriginalChords = measure.chords.length;
+    const charsPerChord = Math.max(1, Math.floor(beatDivisions / numOriginalChords));
     
     let measureAbc = "";
-    
-    measure.chords.forEach((chordStr, chordIndex) => {
-      // Reset prevNote for each chord to avoid climbing indefinitely out of instrument range
-      prevNote = null;
-      
-      const chord = Chord.get(chordStr);
-      // Fallback notes if invalid chord
-      let notes = chord.empty ? ["C", "E", "G"] : chord.notes;
+    let measureVoice2 = "";
 
-      // Ensure we have notes to play
+    const chordSpans: { chordStr: string, slots: number }[] = [];
+    measure.chords.forEach(c => {
+      if (chordSpans.length > 0 && chordSpans[chordSpans.length - 1].chordStr === c) {
+        chordSpans[chordSpans.length - 1].slots += 1;
+      } else {
+        chordSpans.push({ chordStr: c, slots: 1 });
+      }
+    });
+    
+    let currentSlotIndex = 0;
+    
+    chordSpans.forEach((span) => {
+      const chordStr = span.chordStr;
+      const chord = Chord.get(chordStr);
+      let notes = chord.empty ? ["C", "E", "G"] : chord.notes;
       if (notes.length === 0) notes = ["C"];
 
-      // Add a chord symbol to the first note of this chord's sequence
-      let isFirstNoteOfChord = true;
+      // --- Voice 2: Sustained Chords (1 octave higher) ---
+      let chordOctave = baseOctave + 1;
+      let chordNotesStr = "";
+      let prevMidiChord = Note.midi(`${notes[0]}${chordOctave}`) || 0;
+      let currentOctaveChord = chordOctave;
 
-      // Extract the specific rhythm slice for this chord
+      notes.forEach((n, idx) => {
+        let midi = Note.midi(`${n}${currentOctaveChord}`) || 0;
+        if (idx > 0 && midi < prevMidiChord) {
+          currentOctaveChord++;
+          midi = Note.midi(`${n}${currentOctaveChord}`) || 0;
+        }
+        prevMidiChord = midi;
+
+        let targetNote = `${n}${currentOctaveChord}`;
+
+        if (instrument !== "C") {
+          const transposed = Note.transpose(targetNote, TRANSPOSE_MAP[instrument]);
+          if (transposed) targetNote = transposed;
+        }
+        if (visualOctaveOffset !== 0) {
+          const nInfo = Note.get(targetNote);
+          targetNote = `${nInfo.letter}${nInfo.acc}${nInfo.oct! + visualOctaveOffset}`;
+        }
+        chordNotesStr += toABCFormat(targetNote);
+      });
+
+      const chordDurationUnits = span.slots * charsPerChord;
+      measureVoice2 += `[${chordNotesStr}]${chordDurationUnits} `;
+
+      // --- Voice 1: Arpeggio Melody ---
+      let isFirstNoteOfChord = true;
       const rhythmSlice = rhythmPattern.substring(
-        chordIndex * charsPerChord, 
-        (chordIndex + 1) * charsPerChord
+        currentSlotIndex * charsPerChord, 
+        (currentSlotIndex + span.slots) * charsPerChord
       );
 
       let noteIdx = 0;
-      // Pre-generate exactly 2 octaves of notes to keep it within a strict musical bound.
       let notesPool: string[] = [];
       const rootStr = notes[0];
       let currentOctave = baseOctave;
       let prevMidi = Note.midi(`${rootStr}${currentOctave}`) || 0;
 
-      // Construct first octave ascending
       notes.forEach((n) => {
         let midi = Note.midi(`${n}${currentOctave}`) || 0;
         if (midi < prevMidi) {
@@ -244,7 +284,6 @@ export function generateABC(
         prevMidi = midi;
       });
 
-      // Construct second octave ascending
       notes.forEach((n) => {
         let midi = Note.midi(`${n}${currentOctave}`) || 0;
         if (midi < prevMidi) {
@@ -255,7 +294,6 @@ export function generateABC(
         prevMidi = midi;
       });
       
-      // Shuffle if random
       if (direction === 'random') {
         notesPool = notesPool.sort(() => Math.random() - 0.5);
       } else if (direction === 'down') {
@@ -265,11 +303,9 @@ export function generateABC(
       for (let j = 0; j < rhythmSlice.length; j++) {
         const char = rhythmSlice[j];
         if (char.toLowerCase() === 'x') {
-          // Cycle through the strictly bounded 2-octave pool
           let targetNote = notesPool[noteIdx % notesPool.length];
           noteIdx++;
           
-          // Transpose targetNote if needed
           if (instrument !== "C") {
             const transposed = Note.transpose(targetNote, TRANSPOSE_MAP[instrument]);
             if (transposed) {
@@ -290,17 +326,24 @@ export function generateABC(
             measureAbc += `${abcNote} `;
           }
         } else {
-          // Rest or Tie. For simplicity, we make it a rest 'z'
           measureAbc += `z `;
         }
       }
+      
+      currentSlotIndex += span.slots;
     });
 
-    abc += measureAbc.trim() + " | ";
+    v1CurrentLine += measureAbc.trim() + " | ";
+    v2CurrentLine += measureVoice2.trim() + " | ";
     
     // Newline every 4 measures
-    if ((i + 1) % 4 === 0) {
-      abc += "\n";
+    if ((i + 1) % 4 === 0 || i === progression.length - 1) {
+      abc += `V: 1\n%%MIDI program ${playbackProgram}\n${v1CurrentLine}\n`;
+      if (playAccompaniment) {
+        abc += `V: 2\n%%MIDI program 16\n%%MIDI control 7 60\n${v2CurrentLine}\n`;
+      }
+      v1CurrentLine = "";
+      v2CurrentLine = "";
     }
   }
 

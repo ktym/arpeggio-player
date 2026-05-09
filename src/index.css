@@ -220,6 +220,11 @@ button.primary:hover {
   stroke: #000000;
 }
 
+/* Hide the second voice (chords accompaniment) from the sheet music */
+.abcjs-v1 {
+  display: none !important;
+}
+
 .playback-controls {
   display: flex;
   align-items: center;

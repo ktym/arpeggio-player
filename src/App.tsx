@@ -15,6 +15,7 @@ function App() {
   const [title, setTitle] = useState<string>("Arpeggio Practice");
   const [playbackProgram, setPlaybackProgram] = useState<number>(66);
   const [visualOctaveOffset, setVisualOctaveOffset] = useState<number>(1);
+  const [playAccompaniment, setPlayAccompaniment] = useState<boolean>(true);
   const [selectedScale, setSelectedScale] = useState<string | null>(null);
 
   const [abcString, setAbcString] = useState<string>("");
@@ -24,7 +25,7 @@ function App() {
   useEffect(() => {
     try {
       const parsed = parseChordProgression(chordsInput);
-      const generatedAbc = generateABC(parsed, rhythmPattern, instrument, direction, title, playbackProgram, visualOctaveOffset);
+      const generatedAbc = generateABC(parsed, rhythmPattern, instrument, direction, title, playbackProgram, visualOctaveOffset, playAccompaniment);
       setAbcString(generatedAbc);
       setScales(analyzeScales(parsed));
 
@@ -34,7 +35,7 @@ function App() {
     } catch (e) {
       console.error("Error generating ABC:", e);
     }
-  }, [chordsInput, rhythmPattern, instrument, direction, title, playbackProgram, selectedScale, visualOctaveOffset]);
+  }, [chordsInput, rhythmPattern, instrument, direction, title, playbackProgram, selectedScale, visualOctaveOffset, playAccompaniment]);
 
   return (
     <div className="container">
@@ -66,9 +67,11 @@ function App() {
           setPlaybackProgram={setPlaybackProgram}
           visualOctaveOffset={visualOctaveOffset}
           setVisualOctaveOffset={setVisualOctaveOffset}
+          playAccompaniment={playAccompaniment}
+          setPlayAccompaniment={setPlayAccompaniment}
         />
 
-        <NotationPlayer abcString={abcString} lang={lang} />
+        <NotationPlayer abcString={abcString} lang={lang} playAccompaniment={playAccompaniment} />
 
         {scales.length > 0 && (
           <div className="panel" style={{ marginTop: '1.5rem' }}>
@@ -88,7 +91,7 @@ function App() {
             
             {selectedScale && scaleAbcString && (
               <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                <NotationPlayer abcString={scaleAbcString} lang={lang} />
+                <NotationPlayer abcString={scaleAbcString} lang={lang} playAccompaniment={false} />
               </div>
             )}
           </div>

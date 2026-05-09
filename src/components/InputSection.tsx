@@ -16,6 +16,10 @@ interface InputSectionProps {
   setTitle: (val: string) => void;
   playbackProgram: number;
   setPlaybackProgram: (val: number) => void;
+  visualOctaveOffset: number;
+  setVisualOctaveOffset: (val: number) => void;
+  playAccompaniment: boolean;
+  setPlayAccompaniment: (val: boolean) => void;
 }
 
 const PRESETS = [
@@ -39,7 +43,9 @@ export const InputSection: React.FC<InputSectionProps> = ({
   playbackProgram,
   setPlaybackProgram,
   visualOctaveOffset,
-  setVisualOctaveOffset
+  setVisualOctaveOffset,
+  playAccompaniment,
+  setPlayAccompaniment
 }) => {
   const [showHelp, setShowHelp] = useState(false);
 
@@ -202,6 +208,20 @@ export const InputSection: React.FC<InputSectionProps> = ({
               <option value={66}>{lang === 'ja' ? 'テナーサックス' : 'Tenor Sax'}</option>
               <option value={67}>{lang === 'ja' ? 'バリトンサックス' : 'Baritone Sax'}</option>
             </select>
+          </div>
+        </div>
+
+        <div className="grid-2">
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', height: '100%', marginBottom: 0 }}>
+              <input 
+                type="checkbox" 
+                checked={playAccompaniment} 
+                onChange={(e) => setPlayAccompaniment(e.target.checked)}
+                style={{ width: '1.2rem', height: '1.2rem', margin: 0 }}
+              />
+              {lang === 'ja' ? '伴奏（コード）をオルガンで鳴らす' : 'Play Organ Chord Accompaniment'}
+            </label>
           </div>
         </div>
 

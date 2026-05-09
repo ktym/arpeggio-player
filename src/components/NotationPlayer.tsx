@@ -6,9 +6,10 @@ import 'abcjs/abcjs-audio.css';
 interface NotationPlayerProps {
   abcString: string;
   lang: 'en' | 'ja';
+  playAccompaniment?: boolean;
 }
 
-export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang }) => {
+export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang, playAccompaniment = false }) => {
   const paperRef = useRef<HTMLDivElement>(null);
   const synthControllerRef = useRef<any>(null);
   const [tempo, setTempo] = useState(120);
@@ -30,6 +31,7 @@ export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang 
 
   useEffect(() => {
     if (!paperRef.current) return;
+    let isActive = true;
     
     try {
       setError(null);
@@ -62,7 +64,6 @@ export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang 
         displayWarp: false
       });
 
-      // Use a new CreateSynth to generate the buffer
       const createSynth = new abcjs.synth.CreateSynth();
       createSynth.init({
         visualObj: visualObj,
@@ -71,6 +72,7 @@ export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang 
           chordsOff: true
         }
       }).then(() => {
+        if (!isActive) return;
         synthControl.setTune(visualObj, false, {
           soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/",
           chordsOff: true
@@ -78,13 +80,27 @@ export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang 
           console.warn("Audio warning:", err);
         });
       }).catch((err: any) => {
+        if (!isActive) return;
         console.error("Synth init error:", err);
       });
 
     } catch (err: any) {
+      if (!isActive) return;
       setError(err.message || "Failed to render notation.");
     }
-  }, [debouncedAbc, tempo, audioId]);
+    
+    return () => {
+      isActive = false;
+      if (synthControllerRef.current) {
+        try {
+          synthControllerRef.current.pause();
+          synthControllerRef.current.destroy();
+        } catch (e) {
+          // ignore cleanup errors
+        }
+      }
+    };
+  }, [debouncedAbc, tempo, audioId, playAccompaniment]);
 
   return (
     <div className="panel">
