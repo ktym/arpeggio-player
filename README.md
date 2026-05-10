@@ -2,6 +2,8 @@
 
 Arpeggio Player is an interactive web application designed for practicing musical arpeggios and scales, with a special focus on transposing instruments like the saxophone (Tenor, Alto, Soprano, Baritone). It automatically generates readable sheet music from chord progressions and provides audio playback using high-quality MIDI soundfonts.
 
+![](screenshot_en.png)
+
 ## Features
 
 - **Automated Arpeggio Generation**: Input a sequence of chords (e.g., `Cmaj7 | Dm7 G7 | Cmaj7`) to automatically generate musical notation for arpeggios.
