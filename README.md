@@ -7,8 +7,8 @@ Arpeggio Player is an interactive web application designed for practicing musica
 ## Features
 
 - **Automated Arpeggio Generation**: Input a sequence of chords (e.g., `Cmaj7 | Dm7 G7 | Cmaj7`) to automatically generate musical notation for arpeggios.
-- **Custom Rhythm Patterns**: Control the rhythmic subdivision of the arpeggio directly via text input (e.g., `x-xx-x-x-` for complex 16th note rhythms).
-- **Arpeggio Directions**: Practice both ascending (Root to 7th), descending (7th to Root), and randomized arpeggios.
+- **Custom Rhythm Patterns**: Control the rhythmic subdivision of the arpeggio using the Simple Syntax (e.g. `x-xx-x-x | -x-xx-x-` for fixed length grids) or the Advanced Syntax with standard note values (e.g. `4 8 8 8t 8t 8t r4 | 2 2` for precise mixed durations).
+- **Arpeggio Directions**: Practice ascending (Root to 7th), descending (7th to Root), full randomize, root-only, and root with random 3rd arpeggios.
 - **Full Transposition Support**: Optimized for woodwind and brass players. Toggle between Concert Pitch, B♭ instruments, and E♭ instruments for accurate notation.
 - **Notation Octave Shift**: Read sheet music in the most comfortable register for your instrument (e.g., moving Tenor Sax notation up an octave to avoid excessive ledger lines) without affecting the correct MIDI playback octave.
 - **Multiple Playback Sounds**: Select between Piano, Soprano Sax, Alto Sax, Tenor Sax, and Baritone Sax for the main melody.

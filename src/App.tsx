@@ -8,7 +8,7 @@ import './index.css';
 
 function App() {
   const [lang, setLang] = useState<'ja' | 'en'>('ja');
-  const [chordsInput, setChordsInput] = useState<string>("Cmaj7 | Dm7 G7 | Cmaj7 | Cmaj7");
+  const [chordsInput, setChordsInput] = useState<string>("Dm7 G7 | Cmaj7");
   const [rhythmPattern, setRhythmPattern] = useState<string>("x-xx-x-x-x-xx-x-");
   const [instrument, setInstrument] = useState<Instrument>("Bb");
   const [direction, setDirection] = useState<ArpeggioDirection>("up");
@@ -18,15 +18,28 @@ function App() {
   const [playAccompaniment, setPlayAccompaniment] = useState<boolean>(true);
   const [selectedScale, setSelectedScale] = useState<string | null>(null);
 
-  const [abcString, setAbcString] = useState<string>("");
+  const [visualAbcString, setVisualAbcString] = useState<string>("");
+  const [audioAbcString, setAudioAbcString] = useState<string>("");
   const [scaleAbcString, setScaleAbcString] = useState<string>("");
   const [scales, setScales] = useState<string[]>([]);
+  const [randomSeed, setRandomSeed] = useState<number>(Date.now());
+
+  useEffect(() => {
+    if (direction === 'random' || direction === 'root3') {
+      setRandomSeed(Date.now());
+    }
+  }, [direction]);
 
   useEffect(() => {
     try {
       const parsed = parseChordProgression(chordsInput);
-      const generatedAbc = generateABC(parsed, rhythmPattern, instrument, direction, title, playbackProgram, visualOctaveOffset, playAccompaniment);
-      setAbcString(generatedAbc);
+      
+      const visualAbc = generateABC(parsed, rhythmPattern, instrument, direction, title, playbackProgram, visualOctaveOffset, false, randomSeed);
+      setVisualAbcString(visualAbc);
+
+      const audioAbc = generateABC(parsed, rhythmPattern, instrument, direction, title, playbackProgram, visualOctaveOffset, playAccompaniment, randomSeed);
+      setAudioAbcString(audioAbc);
+      
       setScales(analyzeScales(parsed));
 
       if (selectedScale) {
@@ -35,7 +48,7 @@ function App() {
     } catch (e) {
       console.error("Error generating ABC:", e);
     }
-  }, [chordsInput, rhythmPattern, instrument, direction, title, playbackProgram, selectedScale, visualOctaveOffset, playAccompaniment]);
+  }, [chordsInput, rhythmPattern, instrument, direction, title, playbackProgram, selectedScale, visualOctaveOffset, playAccompaniment, randomSeed]);
 
   return (
     <div className="container">
@@ -69,9 +82,10 @@ function App() {
           setVisualOctaveOffset={setVisualOctaveOffset}
           playAccompaniment={playAccompaniment}
           setPlayAccompaniment={setPlayAccompaniment}
+          onShuffle={() => setRandomSeed(Date.now())}
         />
 
-        <NotationPlayer abcString={abcString} lang={lang} playAccompaniment={playAccompaniment} />
+        <NotationPlayer visualAbc={visualAbcString} audioAbc={audioAbcString} lang={lang} playAccompaniment={playAccompaniment} />
 
         {scales.length > 0 && (
           <div className="panel" style={{ marginTop: '1.5rem' }}>
@@ -91,7 +105,7 @@ function App() {
             
             {selectedScale && scaleAbcString && (
               <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                <NotationPlayer abcString={scaleAbcString} lang={lang} playAccompaniment={false} />
+                <NotationPlayer visualAbc={scaleAbcString} audioAbc={scaleAbcString} lang={lang} playAccompaniment={false} />
               </div>
             )}
           </div>

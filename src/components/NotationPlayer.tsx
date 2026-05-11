@@ -4,12 +4,13 @@ import { Settings2 } from 'lucide-react';
 import 'abcjs/abcjs-audio.css';
 
 interface NotationPlayerProps {
-  abcString: string;
+  visualAbc: string;
+  audioAbc: string;
   lang: 'en' | 'ja';
   playAccompaniment?: boolean;
 }
 
-export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang, playAccompaniment = false }) => {
+export const NotationPlayer: React.FC<NotationPlayerProps> = ({ visualAbc, audioAbc, lang, playAccompaniment = false }) => {
   const paperRef = useRef<HTMLDivElement>(null);
   const synthControllerRef = useRef<any>(null);
   const [tempo, setTempo] = useState(120);
@@ -19,15 +20,17 @@ export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang,
   const paperId = `paper-${uniqueId}`;
   const audioId = `audio-controls-${uniqueId}`;
 
-  const [debouncedAbc, setDebouncedAbc] = useState(abcString);
+  const [debouncedVisualAbc, setDebouncedVisualAbc] = useState(visualAbc);
+  const [debouncedAudioAbc, setDebouncedAudioAbc] = useState(audioAbc);
 
-  // Debounce the abcString to prevent synth racing during fast typing
+  // Debounce the abc strings to prevent synth racing during fast typing
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedAbc(abcString);
+      setDebouncedVisualAbc(visualAbc);
+      setDebouncedAudioAbc(audioAbc);
     }, 300);
     return () => clearTimeout(timer);
-  }, [abcString]);
+  }, [visualAbc, audioAbc]);
 
   useEffect(() => {
     if (!paperRef.current) return;
@@ -37,14 +40,21 @@ export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang,
       setError(null);
       
       // Add tempo to abcString if not present
-      const abcWithTempo = debouncedAbc.includes('Q:') 
-        ? debouncedAbc 
-        : debouncedAbc.replace('K: C\n', `K: C\nQ: 1/4=${tempo}\n`);
+      const visualAbcWithTempo = debouncedVisualAbc.includes('Q:') 
+        ? debouncedVisualAbc 
+        : debouncedVisualAbc.replace('K: C\n', `K: C\nQ: 1/4=${tempo}\n`);
 
-      const visualObj = abcjs.renderAbc(paperRef.current, abcWithTempo, {
+      const audioAbcWithTempo = debouncedAudioAbc.includes('Q:') 
+        ? debouncedAudioAbc 
+        : debouncedAudioAbc.replace('K: C\n', `K: C\nQ: 1/4=${tempo}\n`);
+
+      abcjs.renderAbc(paperRef.current, visualAbcWithTempo, {
         add_classes: true,
         responsive: 'resize'
-      })[0]; // get the first tune
+      });
+
+      // Render audio ABC invisibly to generate MIDI data
+      const audioVisualObj = abcjs.renderAbc("*", audioAbcWithTempo)[0];
 
       // Completely reset audio controls DOM
       const audioControls = document.getElementById(audioId);
@@ -66,14 +76,14 @@ export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang,
 
       const createSynth = new abcjs.synth.CreateSynth();
       createSynth.init({
-        visualObj: visualObj,
+        visualObj: audioVisualObj,
         options: {
           soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/",
           chordsOff: true
         }
       }).then(() => {
         if (!isActive) return;
-        synthControl.setTune(visualObj, false, {
+        synthControl.setTune(audioVisualObj, false, {
           soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/",
           chordsOff: true
         }).catch((err: any) => {
@@ -100,7 +110,7 @@ export const NotationPlayer: React.FC<NotationPlayerProps> = ({ abcString, lang,
         }
       }
     };
-  }, [debouncedAbc, tempo, audioId, playAccompaniment]);
+  }, [debouncedVisualAbc, debouncedAudioAbc, tempo, audioId, playAccompaniment]);
 
   return (
     <div className="panel">

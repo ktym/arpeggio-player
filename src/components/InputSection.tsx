@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Instrument, ArpeggioDirection } from '../utils/musicEngine';
-import { HelpCircle, Music } from 'lucide-react';
+import { HelpCircle, Music, RefreshCw } from 'lucide-react';
 
 interface InputSectionProps {
   lang: 'en' | 'ja';
@@ -20,12 +20,30 @@ interface InputSectionProps {
   setVisualOctaveOffset: (val: number) => void;
   playAccompaniment: boolean;
   setPlayAccompaniment: (val: boolean) => void;
+  onShuffle?: () => void;
 }
 
 const PRESETS = [
-  { name: "ii-V-I (C)", chords: "Dm7 G7 | Cmaj7 | Cmaj7" },
-  { name: "Jazz Blues (F)", chords: "F7 | Bb7 | F7 | Cm7 F7 | Bb7 | Bdim7 | F7 | Am7 D7 | Gm7 | C7 | F7 D7 | Gm7 C7" },
-  { name: "Rhythm Changes (Bb)", chords: "Bbmaj7 G7 | Cm7 F7 | Bbmaj7 G7 | Cm7 F7 | Fm7 Bb7 | Ebmaj7 Ab7 | Dm7 G7 | Cm7 F7" },
+  { 
+    name: "ii-V-I (C)", 
+    chords: "Dm7 G7 | Cmaj7",
+    rhythm: "x-xx-x-x-x-xx-x-"
+  },
+  { 
+    name: "Jazz Blues (F)", 
+    chords: "F7 | Bb7 | F7 | Cm7 F7\nBb7 | Bdim7 | F7 | Am7 D7\nGm7 | C7 | F7 D7 | Gm7 C7",
+    rhythm: "8 8 8 8 8 8 8 8"
+  },
+  { 
+    name: "Rhythm Changes (Bb)", 
+    chords: "Bbmaj7 G7 | Cm7 F7 | Bbmaj7 G7 | Cm7 F7\nFm7 Bb7 | Ebmaj7 Ab7 | Dm7 G7 | Cm7 F7",
+    rhythm: "8t 8t 8t 8t 8t 8t 8t 8t 8t 8t 8t 8t"
+  },
+  {
+    name: "Autumn Leaves (Gm)",
+    chords: "Cm7 | F7 | BbM7 | EbM7\nAm7b5 | D7 | Gm7 | Gm7",
+    rhythm: "r8 8 r8 8 4 4 | 4 8 8 r2"
+  }
 ];
 
 export const InputSection: React.FC<InputSectionProps> = ({
@@ -45,7 +63,8 @@ export const InputSection: React.FC<InputSectionProps> = ({
   visualOctaveOffset,
   setVisualOctaveOffset,
   playAccompaniment,
-  setPlayAccompaniment
+  setPlayAccompaniment,
+  onShuffle
 }) => {
   const [showHelp, setShowHelp] = useState(false);
 
@@ -67,6 +86,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
                 <li>小節の区切りには <code>|</code>（パイプ）または改行を使います。</li>
                 <li>1小節内のコードは半角スペースで区切ります。</li>
                 <li>例: <code>Cmaj7 | Dm7 G7 | Cmaj7</code></li>
+                <li><code>Gm Cm7 | F F Bb F/A</code> のように小節内に同じコードを連続して書いた場合（この例の2小節目の最初の <code>F</code> 2つ）、音が途切れることなく1つの繋がった長いコードとして演奏・描画されます。</li>
               </ul>
 
               <strong>【対応しているコード表記（Aをルートとする例）】</strong>
@@ -94,12 +114,15 @@ export const InputSection: React.FC<InputSectionProps> = ({
 
               <strong>【リズムパターンの指定方法】</strong>
               <ul style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
-                <li>文字の長さで1小節あたりの音符の長さが決まります。</li>
-                <li><code>x</code> を書いたタイミングで音が鳴り、<code>-</code> で休符になります。</li>
-                <li><strong>4分音符 (4文字):</strong> <code>x-x-</code> や <code>xxxx</code></li>
-                <li><strong>8分音符 (8文字):</strong> <code>x-x-x-x-</code> や <code>xxxxxxxx</code></li>
-                <li><strong>3連符 (12文字):</strong> <code>x--x--x--x--</code> や <code>x-xx-xx-xx-x</code></li>
-                <li><strong>16分音符 (16文字):</strong> <code>x-xx-x-x-x-xx-x-</code></li>
+                <li><strong>★シンプルバージョン（全ての音符を同じ長さで刻む）</strong></li>
+                <li>文字の長さで1小節あたりの音符の長さが決まります。<code>x</code> で音が鳴り、<code>-</code> で休符になります。</li>
+                <li>例: <code>x-xx-x-x | -x-xx-x-</code> （1小節が8文字なので1文字が8分音符になり、2小節パターンになります）</li>
+                <li style={{ marginTop: '0.5rem' }}><strong>★アドバンスドバージョン（様々な長さの音符を組み合わせる）</strong></li>
+                <li>数字をスペース区切りで並べます。<code>|</code> で区切ると「複数小節の繰り返しパターン」を作れます。</li>
+                <li><strong>音符:</strong> <code>4</code> (4分音符), <code>8</code> (8分音符), <code>16</code> (16分音符), <code>2</code> (2分音符), <code>1</code> (全音符)</li>
+                <li><strong>休符:</strong> 数字の前に <code>r</code> を付けます（例: <code>r4</code> = 4分休符, <code>r8</code> = 8分休符）</li>
+                <li><strong>付点と3連符:</strong> <code>4.</code> (付点4分), <code>8t</code> (8分3連符の1つ分)</li>
+                <li>例: <code>r8 8 r8 8 4 4 | 4 8 8 r2</code> （1小節目は裏拍から入るリズム、2小節目は4分・8分×2・2分休符）</li>
               </ul>
 
               <strong>【プリセット進行について】</strong>
@@ -107,6 +130,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
                 <li><strong>ii-V-I:</strong> ジャズやポピュラー音楽で最も基本的かつ重要な「ツー・ファイブ・ワン」進行。</li>
                 <li><strong>Jazz Blues:</strong> 伝統的な12小節のブルースを、ジャズ向けに複雑なコード（セブンスやツーファイブ）でアレンジしたもの。</li>
                 <li><strong>Rhythm Changes:</strong> G.ガーシュウィンの名曲「I Got Rhythm」のコード進行。ジャズのセッションで極めて頻繁に演奏される定番曲の骨格です。</li>
+                <li><strong>Autumn Leaves:</strong> ジャズ・スタンダードの代表曲「枯葉」の進行。マイナー・ツーファイブを含む美しい哀愁のある進行で、アルペジオ練習にも最適です。</li>
               </ul>
 
               <strong>【使用可能なスケールの見方】</strong>
@@ -122,6 +146,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
                 <li>Separate measures using a pipe <code>|</code> or a newline.</li>
                 <li>Separate chords within a measure using spaces.</li>
                 <li>Example: <code>Cmaj7 | Dm7 G7 | Cmaj7</code></li>
+                <li>If you write consecutive identical chords like <code>Gm Cm7 | F F Bb F/A</code>, the two <code>F</code> chords will be seamlessly combined into one continuous chord block.</li>
               </ul>
 
               <strong>Supported Chord Formats (using A as root):</strong>
@@ -149,13 +174,15 @@ export const InputSection: React.FC<InputSectionProps> = ({
 
               <strong>Rhythm Pattern Syntax:</strong>
               <ul style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
-                <li>The length of the string determines the note duration for one measure.</li>
-                <li>Use <code>x</code> to play a note.</li>
-                <li>Use <code>-</code> (or any other character) for a rest.</li>
-                <li><strong>Quarter notes (4 chars):</strong> <code>x-x-</code> or <code>xxxx</code></li>
-                <li><strong>8th notes (8 chars):</strong> <code>x-x-x-x-</code> or <code>xxxxxxxx</code></li>
-                <li><strong>Triplets (12 chars):</strong> <code>x--x--x--x--</code></li>
-                <li><strong>16th notes (16 chars):</strong> <code>x-xx-x-x-x-xx-x-</code></li>
+                <li><strong>★ Simple Version (Fixed length grid)</strong></li>
+                <li>String length sets note duration. <code>x</code> plays a note, <code>-</code> is a rest.</li>
+                <li>Example: <code>x-xx-x-x | -x-xx-x-</code> (8 chars per measure means 8th notes, spanning 2 measures)</li>
+                <li style={{ marginTop: '0.5rem' }}><strong>★ Advanced Version (Mixed durations)</strong></li>
+                <li>Enter note durations separated by spaces. Use <code>|</code> for multi-measure patterns.</li>
+                <li><strong>Notes:</strong> <code>4</code> (Quarter), <code>8</code> (Eighth), <code>16</code> (16th), <code>2</code> (Half), <code>1</code> (Whole)</li>
+                <li><strong>Rests:</strong> Add <code>r</code> before the number (e.g., <code>r4</code>, <code>r8</code>)</li>
+                <li><strong>Dots & Triplets:</strong> <code>4.</code> (Dotted quarter), <code>8t</code> (Eighth triplet)</li>
+                <li>Example: <code>r8 8 r8 8 4 4 | 4 8 8 r2</code></li>
               </ul>
 
               <strong>Preset Progressions:</strong>
@@ -163,6 +190,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
                 <li><strong>ii-V-I:</strong> The most common and fundamental chord progression in jazz and popular music.</li>
                 <li><strong>Jazz Blues:</strong> A traditional 12-bar blues reharmonized with typical jazz chords (extended sevenths and ii-V progressions).</li>
                 <li><strong>Rhythm Changes:</strong> The chord progression from George Gershwin's "I Got Rhythm", a staple standard played at almost every jazz jam session.</li>
+                <li><strong>Autumn Leaves:</strong> A quintessential jazz standard. Its descending fourths progression and minor ii-V-i cadences make it an essential practice piece.</li>
               </ul>
 
               <strong>Suggested Scales:</strong>
@@ -177,7 +205,13 @@ export const InputSection: React.FC<InputSectionProps> = ({
 
       <div className="preset-list" style={{ marginTop: '1rem' }}>
         {PRESETS.map((preset, idx) => (
-          <button key={idx} onClick={() => setChordsInput(preset.chords)}>
+          <button 
+            key={idx} 
+            onClick={() => {
+              setChordsInput(preset.chords);
+              setRhythmPattern(preset.rhythm);
+            }}
+          >
             {preset.name}
           </button>
         ))}
@@ -192,7 +226,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
 
         <div className="grid-2">
           <div>
-            <label>{lang === 'ja' ? '楽器（移調）' : 'Instrument Transposition'}</label>
+            <label>{lang === 'ja' ? '楽譜（移調）' : 'Sheet Music (Transposition)'}</label>
             <select value={instrument} onChange={(e) => setInstrument(e.target.value as Instrument)}>
               <option value="C">{lang === 'ja' ? '実音 (コンサートピッチ C)' : 'Concert Pitch (C)'}</option>
               <option value="Eb">{lang === 'ja' ? 'E♭管 (アルト/バリトン)' : 'E♭ Instruments (Alto/Bari Sax)'}</option>
@@ -236,22 +270,35 @@ export const InputSection: React.FC<InputSectionProps> = ({
           </div>
           <div>
             <label>{lang === 'ja' ? 'アルペジオの方向' : 'Arpeggio Direction'}</label>
-            <select value={direction} onChange={(e) => setDirection(e.target.value as ArpeggioDirection)}>
-              <option value="up">{lang === 'ja' ? '上行 (Rootから)' : 'Up (Root to 7th)'}</option>
-              <option value="down">{lang === 'ja' ? '下行 (7thから)' : 'Down (7th to Root)'}</option>
-              <option value="random">{lang === 'ja' ? 'ランダム' : 'Randomize'}</option>
-            </select>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <select value={direction} onChange={(e) => setDirection(e.target.value as ArpeggioDirection)} style={{ flex: 1 }}>
+                <option value="up">{lang === 'ja' ? '上行 (ルート音から)' : 'Up (Root to 7th)'}</option>
+                <option value="down">{lang === 'ja' ? '下行 (7thから)' : 'Down (7th to Root)'}</option>
+                <option value="random">{lang === 'ja' ? 'ランダム (コード構成音)' : 'Randomize (All Chord Tones)'}</option>
+                <option value="root">{lang === 'ja' ? 'ルート音のみ' : 'Root Only'}</option>
+                <option value="root3">{lang === 'ja' ? 'ルート音＋3rd (ランダム装飾)' : 'Root & 3rd (Random Ornamental)'}</option>
+              </select>
+              {(direction === 'random' || direction === 'root3') && onShuffle && (
+                <button 
+                  onClick={onShuffle}
+                  title={lang === 'ja' ? 'ランダムパターンを再生成' : 'Regenerate random pattern'}
+                  style={{ padding: '0 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <RefreshCw size={18} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="grid-2">
           <div>
-            <label>{lang === 'ja' ? 'リズムパターン (1小節あたり)' : 'Rhythm Pattern (per measure)'}</label>
+            <label>{lang === 'ja' ? 'リズムパターン' : 'Rhythm Pattern'}</label>
             <input 
               type="text" 
               value={rhythmPattern} 
               onChange={(e) => setRhythmPattern(e.target.value)}
-              placeholder="e.g. x-x-x-x- (8th notes)"
+              placeholder="e.g. 8 8 8 8 8 8 8 8"
             />
           </div>
           <div>
