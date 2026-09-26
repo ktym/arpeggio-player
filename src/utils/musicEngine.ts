@@ -1,7 +1,7 @@
 import { Chord, Note, Scale } from "@tonaljs/tonal";
 
 export type Instrument = "C" | "Bb" | "Eb";
-export type ArpeggioDirection = "up" | "down" | "random" | "root" | "root3";
+export type ArpeggioDirection = "up" | "down" | "random" | "root" | "third" | "root3";
 
 const TRANSPOSE_MAP: Record<Instrument, string> = {
   "C": "1P",
@@ -187,6 +187,16 @@ export function parseRhythmPattern(patternStr: string): RhythmEvent[][] {
   });
 }
 
+function thirdNoteOfChord(notes: string[], baseOctave: number): string {
+  const rootNote = `${notes[0]}${baseOctave}`;
+  if (notes.length < 2) return rootNote;
+  let thirdOctave = baseOctave;
+  if ((Note.midi(`${notes[1]}${thirdOctave}`) || 0) < (Note.midi(rootNote) || 0)) {
+    thirdOctave++;
+  }
+  return `${notes[1]}${thirdOctave}`;
+}
+
 function buildNotesPool(chordStr: string, baseOctave: number, direction: ArpeggioDirection, seed: number = 0): string[] {
   const chord = Chord.get(chordStr);
   let notes = chord.empty ? ["C", "E", "G"] : chord.notes;
@@ -202,16 +212,13 @@ function buildNotesPool(chordStr: string, baseOctave: number, direction: Arpeggi
     return [`${notes[0]}${baseOctave}`];
   }
 
+  if (direction === "third") {
+    return [thirdNoteOfChord(notes, baseOctave)];
+  }
+
   if (direction === "root3") {
     const rootNote = `${notes[0]}${baseOctave}`;
-    let thirdNote = rootNote;
-    if (notes.length > 1) {
-      let thirdOctave = baseOctave;
-      if ((Note.midi(`${notes[1]}${thirdOctave}`) || 0) < (Note.midi(rootNote) || 0)) {
-         thirdOctave++;
-      }
-      thirdNote = `${notes[1]}${thirdOctave}`;
-    }
+    const thirdNote = thirdNoteOfChord(notes, baseOctave);
     
     // Create a pool of 16 notes to ensure a good random distribution
     const pool: string[] = [];
