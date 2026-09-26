@@ -35,9 +35,9 @@ const PRESETS = [
     rhythm: "8 8 8 8 8 8 8 8"
   },
   { 
-    name: "Rhythm Changes (Bb)", 
+    name: "I Got Rhythm (Bb)", 
     chords: "Bbmaj7 G7 | Cm7 F7 | Bbmaj7 G7 | Cm7 F7\nFm7 Bb7 | Ebmaj7 Ab7 | Dm7 G7 | Cm7 F7",
-    rhythm: "8t 8t 8t 8t 8t 8t 8t 8t 8t 8t 8t 8t"
+    rhythm: "r8 8 8 8 4. 8 | 4. 8 4 r8 8"
   },
   {
     name: "Autumn Leaves (Gm)",
@@ -129,7 +129,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
               <ul style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
                 <li><strong>ii-V-I:</strong> ジャズやポピュラー音楽で最も基本的かつ重要な「ツー・ファイブ・ワン」進行。</li>
                 <li><strong>Jazz Blues:</strong> 伝統的な12小節のブルースを、ジャズ向けに複雑なコード（セブンスやツーファイブ）でアレンジしたもの。</li>
-                <li><strong>Rhythm Changes:</strong> G.ガーシュウィンの名曲「I Got Rhythm」のコード進行。ジャズのセッションで極めて頻繁に演奏される定番曲の骨格です。</li>
+                <li><strong>I Got Rhythm:</strong> G.ガーシュウィンの同名曲のコード進行。ジャズではこの進行を Rhythm Changes とも呼び、セッションの定番です。リズムは出だしの休符と付点を交ぜた2小節のフレーズです。</li>
                 <li><strong>Autumn Leaves:</strong> ジャズ・スタンダードの代表曲「枯葉」の進行。マイナー・ツーファイブを含む美しい哀愁のある進行で、アルペジオ練習にも最適です。</li>
               </ul>
 
@@ -189,7 +189,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
               <ul style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
                 <li><strong>ii-V-I:</strong> The most common and fundamental chord progression in jazz and popular music.</li>
                 <li><strong>Jazz Blues:</strong> A traditional 12-bar blues reharmonized with typical jazz chords (extended sevenths and ii-V progressions).</li>
-                <li><strong>Rhythm Changes:</strong> The chord progression from George Gershwin's "I Got Rhythm", a staple standard played at almost every jazz jam session.</li>
+                <li><strong>I Got Rhythm:</strong> The chord progression of George Gershwin's song of the same name. Jazz players often call it Rhythm Changes. The rhythm is a two-bar phrase with an opening rest and dotted notes, rather than even triplets.</li>
                 <li><strong>Autumn Leaves:</strong> A quintessential jazz standard. Its descending fourths progression and minor ii-V-i cadences make it an essential practice piece.</li>
               </ul>
 
