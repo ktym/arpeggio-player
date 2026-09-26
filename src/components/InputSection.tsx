@@ -276,6 +276,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
                 <option value="down">{lang === 'ja' ? '下行 (7thから)' : 'Down (7th to Root)'}</option>
                 <option value="random">{lang === 'ja' ? 'ランダム (コード構成音)' : 'Randomize (All Chord Tones)'}</option>
                 <option value="root">{lang === 'ja' ? 'ルート音のみ' : 'Root Only'}</option>
+                <option value="third">{lang === 'ja' ? '3rd音のみ' : '3rd Only'}</option>
                 <option value="root3">{lang === 'ja' ? 'ルート音＋3rd (ランダム装飾)' : 'Root & 3rd (Random Ornamental)'}</option>
               </select>
               {(direction === 'random' || direction === 'root3') && onShuffle && (
